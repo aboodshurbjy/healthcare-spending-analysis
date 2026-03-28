@@ -51,7 +51,7 @@ All data is publicly available from the [Centers for Medicare & Medicaid Service
 ## How to Run
 
 ```bash
-git clone https://github.com/abood05851/healthcare-spending-analysis.git
+git clone https://github.com/aboodshurbjy/healthcare-spending-analysis.git
 cd healthcare-spending-analysis
 pip install -r requirements.txt
 jupyter notebook notebooks/analysis.ipynb
