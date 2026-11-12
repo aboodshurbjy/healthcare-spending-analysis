@@ -1,14 +1,10 @@
-# Healthcare Spending & Hospital Readmissions Analysis
+# Healthcare spending and hospital readmissions
 
 An analysis of 2,818 U.S. acute care hospitals that asks whether hospitals with higher Medicare spending per patient episode have fewer readmissions. It joins three public datasets from the Centers for Medicare & Medicaid Services (CMS) and reports correlations, group comparisons, and a regression with controls.
 
 Short answer: no. Spending and readmission ratios are weakly positively correlated (r = 0.171, n = 2,751), and the association shrinks and then changes sign as controls are added. Details and caveats are below.
 
-## Key Question
-
-> **Do hospitals with higher Medicare spending per episode have fewer patient readmissions?**
-
-## Data Sources
+## Data sources
 
 All data is publicly available from the [CMS Provider Data Catalog](https://data.cms.gov/provider-data/).
 
@@ -22,16 +18,16 @@ The numbers in this README come from files downloaded on 2026-11-10. The HRRP fi
 
 ## Definitions
 
-- **Excess readmission ratio (ERR):** a hospital's predicted 30-day readmission rate divided by its expected rate for a condition. Above 1.0 means more readmissions than expected for its patients.
-- **Average ERR:** the unweighted mean of a hospital's ERRs across the HRRP conditions it reports (between 1 and 6 conditions per hospital). This is the outcome used below.
-- **Spending ratio:** the MSPB score. 1.0 means spending per episode equals the national median.
+- The excess readmission ratio (ERR) is a hospital's predicted 30-day readmission rate divided by its expected rate for a condition. Above 1.0 means more readmissions than expected for its patients.
+- The average ERR is the unweighted mean of a hospital's ERRs across the HRRP conditions it reports (between 1 and 6 conditions per hospital). This is the outcome used below.
+- The spending ratio is the MSPB score. 1.0 means spending per episode equals the national median.
 
-## Methodology
+## Method
 
-1. **Download:** three CSVs from the CMS Provider Data Catalog API.
-2. **Clean:** convert placeholders such as "Not Available" and "Too Few to Report" to missing values, standardize facility IDs, map HRRP measure names to the six conditions, and pivot readmissions to one row per hospital.
-3. **Join:** inner join of the three tables on facility ID.
-4. **Analyze:** Pearson and Spearman correlations, group means with a Welch t-test and Cohen's d, condition-level summaries, and an OLS regression with controls.
+1. Download three CSVs from the CMS Provider Data Catalog API.
+2. Clean them: convert placeholders such as "Not Available" and "Too Few to Report" to missing values, standardize facility IDs, map HRRP measure names to the six conditions, and pivot readmissions to one row per hospital.
+3. Inner join the three tables on facility ID.
+4. Run Pearson and Spearman correlations, group means with a Welch t-test and Cohen's d, condition-level summaries, and an OLS regression with controls.
 
 Steps 1 to 3 are in `src/cms_data.py` and are tested in `tests/test_cms_data.py`. Step 4 is in `notebooks/analysis.ipynb`.
 
@@ -109,7 +105,7 @@ n = 2,621 rated hospitals (197 have no rating). Spearman rho between rating and 
 
 Mean ERR is close to 1.0 for every condition. That is by design, since the ERR compares each hospital to a national expectation, so the ERR cannot show which condition has more readmissions. The predicted readmission rate can: it is highest for heart failure (19.4%) and COPD (18.0%) and lowest for hip/knee replacement (5.5%). Hip/knee has the widest spread of ERRs (SD 0.156). The correlation between ERR and spending is positive for all six conditions, between 0.05 and 0.13. The p-values are below 0.001 for HF, PN, AMI, and hip/knee, 0.015 for COPD, and 0.046 for CABG.
 
-### Robustness check: regression with controls
+### Regression with controls
 
 OLS with the average ERR as the outcome, HC3 robust standard errors, and the same 2,570 hospitals (those with both a spending score and a star rating) in every model.
 
@@ -128,19 +124,19 @@ Two cautions on reading this:
 - Star rating is a questionable control. It is partly computed from readmission measures, so model 3 conditions on something close to the outcome. Model 2 is the cleaner adjusted estimate.
 - The result depends on the sample. On all 2,751 hospitals with a spending score (rated or not), the spending-only coefficient is 0.1133 (SE 0.0141) and the coefficient with ownership and state is 0.0736 (SE 0.0171, p < 0.001).
 
-Taken together: the positive raw association is partly explained by state and ownership, and its sign is not robust. The data does not support the claim that higher spending goes with fewer readmissions, and it does not establish the opposite either.
+State and ownership explain part of the positive raw association, and the sign flips once star rating is added. The data does not support the claim that higher spending goes with fewer readmissions. It does not establish the opposite either.
 
 ## Limitations
 
-- **Correlational.** This is a cross-sectional, hospital-level analysis. It cannot show that spending causes any change in readmissions.
-- **Case mix.** Both measures are risk-adjusted by CMS, but adjustment is imperfect. Hospitals that treat sicker or lower-income patients may have both higher spending and more readmissions.
-- **Hospital size.** Volume, teaching status, and bed count are not controlled for. Size plausibly affects both spending and how stable a hospital's ratios are.
-- **Region.** State fixed effects absorb state-level differences, but not differences within a state such as urban vs. rural markets.
-- **Outcome definition.** The average ERR is an unweighted mean over whichever conditions a hospital reports (1 to 6), so it is not the same quantity for every hospital, and it does not weight by discharge volume.
-- **Selection.** Hospitals without a reported ERR or MSPB score are excluded, which removes critical access hospitals and hospitals with too few cases to report. Results describe acute care hospitals with enough volume to be measured.
-- **Different time windows.** Readmissions cover July 2021 to June 2024. Spending covers calendar year 2024.
-- **Star rating overlap.** The star rating includes readmission measures, which affects both the star rating table and model 3.
-- **Multiple comparisons.** Several tests are reported with no correction. P-values near 0.05 should be read with that in mind.
+- This is a cross-sectional, hospital-level analysis. It cannot show that spending causes any change in readmissions.
+- Both measures are risk-adjusted by CMS, but adjustment is imperfect. Hospitals that treat sicker or lower-income patients may have both higher spending and more readmissions.
+- I did not control for volume, teaching status, or bed count. Size plausibly affects both spending and how stable a hospital's ratios are.
+- State fixed effects absorb state-level differences, but not differences within a state such as urban vs. rural markets.
+- The average ERR is an unweighted mean over whichever conditions a hospital reports (1 to 6), so it is not the same quantity for every hospital, and it does not weight by discharge volume.
+- Hospitals without a reported ERR or MSPB score are excluded, which removes critical access hospitals and hospitals with too few cases to report. Results describe acute care hospitals with enough volume to be measured.
+- The time windows differ. Readmissions cover July 2021 to June 2024. Spending covers calendar year 2024.
+- The star rating includes readmission measures, which affects both the star rating table and model 3.
+- Several tests are reported with no correction for multiple comparisons. P-values near 0.05 should be read with that in mind.
 
 ## Visualizations
 
@@ -150,20 +146,17 @@ Taken together: the positive raw association is partly explained by state and ow
 
 ![Hospital Quality Ratings vs. Readmissions](figures/readmissions_by_star_rating.png)
 
-## Project Structure
+## Layout
 
-```
-healthcare-spending-analysis/
-├── notebooks/analysis.ipynb   # analysis, figures, statistics, regression
-├── src/cms_data.py            # download, cleaning, and join functions
-├── tests/test_cms_data.py     # pytest tests for cleaning and join logic
-├── figures/                   # charts written by the notebook
-├── data/                      # CSVs downloaded at run time (not committed)
-├── pytest.ini
-└── requirements.txt
-```
+| Path | Contents |
+|---|---|
+| `notebooks/analysis.ipynb` | analysis, figures, statistics, regression |
+| `src/cms_data.py` | download, cleaning, and join functions |
+| `tests/test_cms_data.py` | pytest tests for cleaning and join logic |
+| `figures/` | charts written by the notebook |
+| `data/` | CSVs downloaded at run time (not committed) |
 
-## Tech Stack
+## Tech stack
 
 - Python 3
 - pandas, numpy: data cleaning and joins
@@ -173,7 +166,7 @@ healthcare-spending-analysis/
 - pytest: tests
 - Jupyter Notebook
 
-## How to Run
+## Running it
 
 ```bash
 git clone https://github.com/aboodshurbjy/healthcare-spending-analysis.git
